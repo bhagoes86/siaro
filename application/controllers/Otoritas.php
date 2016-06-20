@@ -1,0 +1,179 @@
+<?php
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+class Otoritas extends CI_Controller
+{
+    function __construct()
+    {
+        parent::__construct();
+        $this->load->model('Otoritas_model');
+        $this->load->library('form_validation');
+    }
+
+    public function index()
+    {
+        $otoritas = $this->Otoritas_model->get_all();
+
+        $data = array(
+            'otoritas_data' => $otoritas
+        );
+
+        $this->load->view('otoritas/otoritas_list', $data);
+    }
+
+    public function read($id) 
+    {
+        $row = $this->Otoritas_model->get_by_id($id);
+        if ($row) {
+            $data = array(
+		'menu_id' => $row->menu_id,
+		'grup_id' => $row->grup_id,
+	    );
+            $this->load->view('otoritas/otoritas_read', $data);
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('otoritas'));
+        }
+    }
+
+    public function create() 
+    {
+        $data = array(
+            'button' => 'Create',
+            'action' => site_url('otoritas/create_action'),
+	    'menu_id' => set_value('menu_id'),
+	    'grup_id' => set_value('grup_id'),
+	);
+        $this->load->view('otoritas/otoritas_form', $data);
+    }
+    
+    public function create_action() 
+    {
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->create();
+        } else {
+            $data = array(
+	    );
+
+            $this->Otoritas_model->insert($data);
+            $this->session->set_flashdata('message', 'Create Record Success');
+            redirect(site_url('otoritas'));
+        }
+    }
+    
+    public function update($id) 
+    {
+        $row = $this->Otoritas_model->get_by_id($id);
+
+        if ($row) {
+            $data = array(
+                'button' => 'Update',
+                'action' => site_url('otoritas/update_action'),
+		'menu_id' => set_value('menu_id', $row->menu_id),
+		'grup_id' => set_value('grup_id', $row->grup_id),
+	    );
+            $this->load->view('otoritas/otoritas_form', $data);
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('otoritas'));
+        }
+    }
+    
+    public function update_action() 
+    {
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->update($this->input->post('menu_id', TRUE));
+        } else {
+            $data = array(
+	    );
+
+            $this->Otoritas_model->update($this->input->post('menu_id', TRUE), $data);
+            $this->session->set_flashdata('message', 'Update Record Success');
+            redirect(site_url('otoritas'));
+        }
+    }
+    
+    public function delete($id) 
+    {
+        $row = $this->Otoritas_model->get_by_id($id);
+
+        if ($row) {
+            $this->Otoritas_model->delete($id);
+            $this->session->set_flashdata('message', 'Delete Record Success');
+            redirect(site_url('otoritas'));
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('otoritas'));
+        }
+    }
+
+    public function _rules() 
+    {
+
+	$this->form_validation->set_rules('menu_id', 'menu_id', 'trim');
+	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+    }
+
+    public function excel()
+    {
+        $this->load->helper('exportexcel');
+        $namaFile = "otoritas.xls";
+        $judul = "otoritas";
+        $tablehead = 0;
+        $tablebody = 1;
+        $nourut = 1;
+        //penulisan header
+        header("Pragma: public");
+        header("Expires: 0");
+        header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
+        header("Content-Type: application/force-download");
+        header("Content-Type: application/octet-stream");
+        header("Content-Type: application/download");
+        header("Content-Disposition: attachment;filename=" . $namaFile . "");
+        header("Content-Transfer-Encoding: binary ");
+
+        xlsBOF();
+
+        $kolomhead = 0;
+        xlsWriteLabel($tablehead, $kolomhead++, "No");
+
+	foreach ($this->Otoritas_model->get_all() as $data) {
+            $kolombody = 0;
+
+            //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
+            xlsWriteNumber($tablebody, $kolombody++, $nourut);
+
+	    $tablebody++;
+            $nourut++;
+        }
+
+        xlsEOF();
+        exit();
+    }
+
+    public function word()
+    {
+        header("Content-type: application/vnd.ms-word");
+        header("Content-Disposition: attachment;Filename=otoritas.doc");
+
+        $data = array(
+            'otoritas_data' => $this->Otoritas_model->get_all(),
+            'start' => 0
+        );
+        
+        $this->load->view('otoritas/otoritas_doc',$data);
+    }
+
+}
+
+/* End of file Otoritas.php */
+/* Location: ./application/controllers/Otoritas.php */
+/* Please DO NOT modify this information : */
+/* Generated by Harviacode Codeigniter CRUD Generator 2016-06-17 09:24:50 */
+/* http://harviacode.com */
